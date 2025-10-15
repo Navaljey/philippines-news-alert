@@ -1,4 +1,4 @@
-`import Parser from 'rss-parser';
+import Parser from 'rss-parser';
 import { RSSItem } from '@/types/news';
 
 const parser = new Parser({
@@ -46,6 +46,4 @@ export async function fetchAllRSSFeeds(): Promise<RSSItem[]> {
   return allItems.sort((a, b) => 
     new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
   );
-}`
-    },
-    {
+}

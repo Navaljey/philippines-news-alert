@@ -1,11 +1,11 @@
-`import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { fetchAllRSSFeeds } from '@/lib/rss-parser';
 import { filterRelevantNews } from '@/lib/filter';
 import { translateToKorean, reviewAndSummarize } from '@/lib/gemini';
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== \`Bearer \${process.env.CRON_SECRET}\`) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .filter(item => item.score >= 10)
       .slice(0, 5);
 
-    console.log(\`Processing \${recentImportantNews.length} news items\`);
+    console.log(`Processing ${recentImportantNews.length} news items`);
 
     for (const news of recentImportantNews) {
       const titleKo = await translateToKorean(news.title);

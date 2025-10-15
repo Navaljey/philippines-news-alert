@@ -1,11 +1,11 @@
-`import * as admin from 'firebase-admin';
+import * as admin from 'firebase-admin';
 
 if (!admin.apps.length) {
   try {
     admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\\\n/g, '\\n'),
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       }),
     });
@@ -28,7 +28,7 @@ export async function sendPushNotification(
   try {
     const message = {
       notification: {
-        title: \`[\${getCategoryLabel(payload.category)}] \${payload.title}\`,
+        title: `[${getCategoryLabel(payload.category)}] ${payload.title}`,
         body: payload.body,
       },
       data: {
@@ -56,6 +56,4 @@ function getCategoryLabel(category: string): string {
     'general': '일반',
   };
   return labels[category] || '뉴스';
-}`
-    },
-    {
+}

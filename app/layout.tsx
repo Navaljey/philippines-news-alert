@@ -1,4 +1,4 @@
-`export const metadata = {
+export const metadata = {
   title: '필리핀 뉴스 알림',
   description: 'Philippines News Alert System',
 }

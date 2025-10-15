@@ -1,4 +1,4 @@
-`import { RSSItem, NewsCategory, FilterKeywords } from '@/types/news';
+import { RSSItem, NewsCategory, FilterKeywords } from '@/types/news';
 
 export const FILTER_KEYWORDS: FilterKeywords = {
   koreanCommunity: [
@@ -28,7 +28,7 @@ export const FILTER_KEYWORDS: FilterKeywords = {
 };
 
 export function categorizeNews(item: RSSItem): NewsCategory {
-  const text = \`\${item.title} \${item.contentSnippet}\`.toLowerCase();
+  const text = `${item.title} ${item.contentSnippet}`.toLowerCase();
   
   if (matchKeywords(text, FILTER_KEYWORDS.koreanCommunity)) {
     return 'korean-community';
@@ -56,7 +56,7 @@ function matchKeywords(text: string, keywords: string[]): boolean {
 export function calculateRelevanceScore(item: RSSItem, category: NewsCategory): number {
   if (category === 'general') return 0;
   
-  const text = \`\${item.title} \${item.contentSnippet}\`.toLowerCase();
+  const text = `${item.title} ${item.contentSnippet}`.toLowerCase();
   let score = 0;
   
   const categoryKeywords = FILTER_KEYWORDS[
@@ -84,6 +84,4 @@ export function filterRelevantNews(items: RSSItem[]): Array<RSSItem & { category
     })
     .filter(item => item.category !== 'general' || item.score > 0)
     .sort((a, b) => b.score - a.score);
-}`
-    },
-    {
+}

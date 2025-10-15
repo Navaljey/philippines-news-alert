@@ -1,4 +1,4 @@
-`import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { translateToKorean, reviewAndSummarize } from '@/lib/gemini';
 
 export async function POST(request: NextRequest) {

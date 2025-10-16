@@ -1,4 +1,4 @@
-`export interface RSSItem {
+export interface RSSItem {
   title: string;
   link: string;
   pubDate: string;
@@ -36,6 +36,4 @@ export interface FilterKeywords {
   disaster: string[];
   clarkSubic: string[];
   politics: string[];
-}`
-    },
-    {
+}

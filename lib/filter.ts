@@ -82,6 +82,6 @@ export function filterRelevantNews(items: RSSItem[]): Array<RSSItem & { category
       const score = calculateRelevanceScore(item, category);
       return { ...item, category, score };
     })
-    .filter(item => item.category !== 'general' || item.score >= -5)
+    .filter(item => true) 
     .sort((a, b) => b.score - a.score);
 }

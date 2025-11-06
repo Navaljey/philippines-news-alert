@@ -1,89 +1,195 @@
 import Parser from 'rss-parser';
+import { RSSItem } from '@/types/news';
 
-// RSS 파서 초기화 (확장 필드 포함)
 const parser = new Parser({
   customFields: {
     item: [
-      ['content:encoded', 'contentEncoded'],
-      ['media:content', 'mediaContent'],
-      ['media:thumbnail', 'mediaThumbnail'],
-    ],
+      ['content:encoded', 'content'],
+      ['dc:creator', 'creator']
+    ]
   },
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+  },
+  timeout: 10000
 });
 
-// 수집할 RSS 피드 목록 (필리핀 주요 카테고리별)
-const RSS_FEEDS = [
-  { url: 'https://newsinfo.inquirer.net/feed', category: 'news' },
-  { url: 'https://business.inquirer.net/feed', category: 'business' },
-  { url: 'https://entertainment.inquirer.net/feed', category: 'entertainment' },
-  { url: 'https://lifestyle.inquirer.net/feed', category: 'lifestyle' },
-  { url: 'https://technology.inquirer.net/feed', category: 'technology' },
-  { url: 'https://sports.inquirer.net/feed', category: 'sports' },
-];
-
-// 메인 함수: 모든 RSS 수집 + 정리
-export async function fetchAllRSSFeeds() {
-  const allItems: any[] = [];
-
-  for (const { url, category } of RSS_FEEDS) {
+// Inquirer.net RSS 피드
+export async function fetchInquirerRSS(): Promise<RSSItem[]> {
+  const urls = [
+    'https://www.inquirer.net/feed',
+    'https://newsinfo.inquirer.net/feed',
+    'https://globalnation.inquirer.net/feed',
+    'https://business.inquirer.net/feed'
+  ];
+  
+  for (const url of urls) {
     try {
+      console.log(`[Inquirer] Trying: ${url}`);
       const feed = await parser.parseURL(url);
-      console.log(`✅ [${category}] fetched ${feed.items.length} items from ${url}`);
-
-      feed.items.forEach((item) => {
-        const content =
-          item.contentEncoded ||
-          item.content ||
-          item.description ||
-          '';
-
-        allItems.push({
-          title: item.title?.trim() || '',
+      
+      if (feed.items && feed.items.length > 0) {
+        console.log(`[Inquirer] ✓ Success! Got ${feed.items.length} items from ${url}`);
+        return feed.items.map(item => ({
+          title: item.title || '',
           link: item.link || '',
           pubDate: item.pubDate || '',
-          content: cleanContent(content),
+          content: item.content || item['content:encoded'] || '',
           contentSnippet: item.contentSnippet || '',
           guid: item.guid || item.link || '',
-          isoDate: item.isoDate || '',
-          source: feed.title || '',
-          category, // ← 카테고리 자동 부여
-        });
-      });
+          categories: item.categories || [],
+          creator: item.creator || item['dc:creator'] || ''
+        }));
+      }
     } catch (err) {
-      console.error(`❌ Failed to fetch ${url}:`, err);
+      console.log(`[Inquirer] ✗ Failed ${url}:`, err instanceof Error ? err.message : String(err));
     }
   }
-
-  // ✅ 중복 제거
-  const uniqueItems = deduplicateNews(allItems);
-
-  console.log(`📰 Total fetched: ${allItems.length}, unique: ${uniqueItems.length}`);
-
-  return uniqueItems;
+  
+  console.error('[Inquirer] All URLs failed');
+  return [];
 }
 
-// ✅ HTML 정리 함수
-function cleanContent(rawHtml: string): string {
-  if (!rawHtml) return '';
-  return rawHtml
-    .replace(/<[^>]*>/g, ' ') // HTML 태그 제거
-    .replace(/\s+/g, ' ') // 공백 정리
-    .trim();
-}
-
-// ✅ 중복 뉴스 제거 함수
-function deduplicateNews(items: any[]): any[] {
-  const seen = new Set<string>();
-  const unique: any[] = [];
-
-  for (const item of items) {
-    const key = (item.title + item.link).toLowerCase().trim();
-    if (!seen.has(key)) {
-      seen.add(key);
-      unique.push(item);
+// PhilStar RSS 피드
+export async function fetchPhilStarRSS(): Promise<RSSItem[]> {
+  const urls = [
+    'https://www.philstar.com/rss/headlines',
+    'https://www.philstar.com/rss/news',
+    'https://www.philstar.com/rss/nation'
+  ];
+  
+  for (const url of urls) {
+    try {
+      console.log(`[PhilStar] Trying: ${url}`);
+      const feed = await parser.parseURL(url);
+      
+      if (feed.items && feed.items.length > 0) {
+        console.log(`[PhilStar] ✓ Success! Got ${feed.items.length} items from ${url}`);
+        return feed.items.map(item => ({
+          title: item.title || '',
+          link: item.link || '',
+          pubDate: item.pubDate || '',
+          content: item.content || item['content:encoded'] || '',
+          contentSnippet: item.contentSnippet || '',
+          guid: item.guid || item.link || '',
+          categories: item.categories || [],
+          creator: item.creator || item['dc:creator'] || ''
+        }));
+      }
+    } catch (err) {
+      console.log(`[PhilStar] ✗ Failed ${url}:`, err instanceof Error ? err.message : String(err));
     }
   }
-
-  return unique;
+  
+  console.error('[PhilStar] All URLs failed');
+  return [];
 }
 
+// Rappler RSS 피드
+export async function fetchRapplerRSS(): Promise<RSSItem[]> {
+  const urls = [
+    'https://www.rappler.com/feed/',
+    'https://www.rappler.com/nation/feed/',
+    'https://www.rappler.com/newsbreak/feed/'
+  ];
+  
+  for (const url of urls) {
+    try {
+      console.log(`[Rappler] Trying: ${url}`);
+      const feed = await parser.parseURL(url);
+      
+      if (feed.items && feed.items.length > 0) {
+        console.log(`[Rappler] ✓ Success! Got ${feed.items.length} items from ${url}`);
+        return feed.items.map(item => ({
+          title: item.title || '',
+          link: item.link || '',
+          pubDate: item.pubDate || '',
+          content: item.content || item['content:encoded'] || '',
+          contentSnippet: item.contentSnippet || '',
+          guid: item.guid || item.link || '',
+          categories: item.categories || [],
+          creator: item.creator || item['dc:creator'] || ''
+        }));
+      }
+    } catch (err) {
+      console.log(`[Rappler] ✗ Failed ${url}:`, err instanceof Error ? err.message : String(err));
+    }
+  }
+  
+  console.error('[Rappler] All URLs failed');
+  return [];
+}
+
+// GMA News RSS 피드
+export async function fetchGMANewsRSS(): Promise<RSSItem[]> {
+  const urls = [
+    'https://data.gmanetwork.com/gno/rss/news/feed.xml',
+    'https://data.gmanetwork.com/gno/rss/topstories/feed.xml'
+  ];
+  
+  for (const url of urls) {
+    try {
+      console.log(`[GMA News] Trying: ${url}`);
+      const feed = await parser.parseURL(url);
+      
+      if (feed.items && feed.items.length > 0) {
+        console.log(`[GMA News] ✓ Success! Got ${feed.items.length} items from ${url}`);
+        return feed.items.map(item => ({
+          title: item.title || '',
+          link: item.link || '',
+          pubDate: item.pubDate || '',
+          content: item.content || item['content:encoded'] || '',
+          contentSnippet: item.contentSnippet || '',
+          guid: item.guid || item.link || '',
+          categories: item.categories || [],
+          creator: item.creator || item['dc:creator'] || ''
+        }));
+      }
+    } catch (err) {
+      console.log(`[GMA News] ✗ Failed ${url}:`, err instanceof Error ? err.message : String(err));
+    }
+  }
+  
+  console.error('[GMA News] All URLs failed');
+  return [];
+}
+
+// 모든 RSS 피드 수집
+export async function fetchAllRSSFeeds(): Promise<RSSItem[]> {
+  console.log('=== Starting RSS Feed Collection ===');
+  
+  const feeds = await Promise.allSettled([
+    fetchInquirerRSS(),
+    fetchPhilStarRSS(),
+    fetchRapplerRSS(),
+    fetchGMANewsRSS()
+  ]);
+
+  const allItems: RSSItem[] = [];
+  let successCount = 0;
+  
+  feeds.forEach((result, index) => {
+    const sources = ['Inquirer', 'PhilStar', 'Rappler', 'GMA News'];
+    if (result.status === 'fulfilled' && result.value.length > 0) {
+      allItems.push(...result.value);
+      successCount++;
+      console.log(`✓ ${sources[index]}: ${result.value.length} items`);
+    } else {
+      console.log(`✗ ${sources[index]}: Failed or 0 items`);
+    }
+  });
+
+  console.log(`=== Total: ${allItems.length} items from ${successCount} sources ===`);
+
+  // 중복 제거 (같은 URL은 하나만)
+  const uniqueItems = Array.from(
+    new Map(allItems.map(item => [item.link, item])).values()
+  );
+
+  console.log(`=== After deduplication: ${uniqueItems.length} unique items ===`);
+
+  return uniqueItems.sort((a, b) => 
+    new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
+  );
+}

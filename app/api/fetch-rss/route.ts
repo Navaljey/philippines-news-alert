@@ -5,17 +5,19 @@ import { filterRelevantNews } from '@/lib/filter';
 export async function GET() {
   try {
     const rssItems = await fetchAllRSSFeeds();
-    const filteredNews = filterRelevantNews(rssItems);
-
+    
+    // 디버깅: 필터 없이 전체 뉴스 반환
     return NextResponse.json({
       success: true,
-      count: filteredNews.length,
-      news: filteredNews.slice(0, 20),
+      count: rssItems.length,
+      totalRaw: rssItems.length,
+      news: rssItems.slice(0, 5),  // 처음 5개만
+      sample: rssItems[0]  // 첫 번째 뉴스 샘플
     });
   } catch (error) {
     console.error('RSS fetch error:', error);
     return NextResponse.json(
-      { success: false, error: 'Unable to fetch RSS' },
+      { success: false, error: String(error) },
       { status: 500 }
     );
   }

@@ -6,16 +6,11 @@ export async function GET() {
   try {
     const rssItems = await fetchAllRSSFeeds();
     const filteredNews = filterRelevantNews(rssItems);
-    
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentNews = filteredNews.filter(item => 
-      new Date(item.pubDate) > oneDayAgo
-    );
 
     return NextResponse.json({
       success: true,
-      count: recentNews.length,
-      news: recentNews.slice(0, 20),
+      count: filteredNews.length,
+      news: filteredNews.slice(0, 20),
     });
   } catch (error) {
     console.error('RSS fetch error:', error);

@@ -1,65 +1,25 @@
-import Parser from 'rss-parser';
-
-const parser = new Parser({
-  headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)' },
-  timeout: 10000,
-});
-
-export interface NewsItem {
-  title: string;
-  link: string;
-  content: string;
-  pubDate: string;
-  category?: string;
-  contentSnippet: string;
-  guid: string;
-}
-
-const feeds = [
-  'https://newsinfo.inquirer.net/feed',
-  'https://www.philstar.com/rss/headlines',
-  'https://mb.com.ph/feed',
-];
-
-function detectCategory(title: string): string {
-  const t = title.toLowerCase();
-  if (t.includes('covid') || t.includes('health') || t.includes('hospital')) return 'Health';
-  if (t.includes('crime') || t.includes('murder') || t.includes('shot') || t.includes('arrest')) return 'Crime';
-  if (t.includes('politics') || t.includes('election') || t.includes('senate')) return 'Politics';
-  if (t.includes('business') || t.includes('economy') || t.includes('market')) return 'Business';
-  if (t.includes('sports') || t.includes('game') || t.includes('tournament')) return 'Sports';
-  if (t.includes('weather') || t.includes('storm') || t.includes('typhoon')) return 'Weather';
-  return 'General';
-}
-
-export async function fetchAllRSSFeeds(): Promise<NewsItem[]> {
-  const allItems: NewsItem[] = [];
-
-  for (const url of feeds) {
-    try {
-      const feed = await parser.parseURL(url);
-      feed.items?.forEach((item) => {
-        if (!item.title || !item.link) return;
-        allItems.push({
-          title: item.title,
-          link: item.link,
-          content: item.contentSnippet || item.content || '',
-          pubDate: item.pubDate || '',
-          category: detectCategory(item.title),
-          contentSnippet: item.contentSnippet || '',
-          guid: item.guid || '',
-        });
-      });
-    } catch (error) {
-      console.error(`❌ Failed to fetch RSS from ${url}:`, error);
+// 번역 함수에 더 상세한 로깅 추가
+async function translateToKorean(text: string): Promise<string> {
+  try {
+    console.log('Translating text:', text.substring(0, 50) + '...');
+    
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY is not set');
+      return text;
     }
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const prompt = `Translate the following English text to Korean. Only provide the translation, nothing else:\n\n${text}`;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const translatedText = response.text();
+    
+    console.log('Translation successful');
+    return translatedText;
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text; // 실패 시 원문 반환
   }
-
-  const unique = Array.from(
-    new Map(allItems.map((item) => [item.title + item.link, item])).values()
-  );
-
-  unique.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
-
-  return unique;
 }

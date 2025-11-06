@@ -1,4 +1,27 @@
-// 번역 함수에 더 상세한 로깅 추가
+import Parser from 'rss-parser';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+interface CustomFeed {
+  title?: string;
+  description?: string;
+}
+
+interface CustomItem {
+  title?: string;
+  link?: string;
+  pubDate?: string;
+  content?: string;
+  contentSnippet?: string;
+  categories?: string[];
+  guid?: string;
+}
+
+const parser: Parser<CustomFeed, CustomItem> = new Parser({
+  customFields: {
+    item: ['content', 'contentSnippet', 'guid']
+  }
+});
+
 async function translateToKorean(text: string): Promise<string> {
   try {
     console.log('Translating text:', text.substring(0, 50) + '...');
@@ -20,6 +43,38 @@ async function translateToKorean(text: string): Promise<string> {
     return translatedText;
   } catch (error) {
     console.error('Translation error:', error);
-    return text; // 실패 시 원문 반환
+    return text;
+  }
+}
+
+export async function fetchAllRSSFeeds() {
+  const RSS_URL = 'https://newsinfo.inquirer.net/feed';
+  
+  try {
+    const feed = await parser.parseURL(RSS_URL);
+    
+    const newsPromises = feed.items.slice(0, 50).map(async (item) => {
+      const title = item.title || '';
+      const content = item.contentSnippet || item.content || '';
+      
+      const translatedTitle = await translateToKorean(title);
+      const translatedContent = await translateToKorean(content);
+      
+      return {
+        title: translatedTitle,
+        link: item.link || '',
+        pubDate: item.pubDate || '',
+        content: translatedContent,
+        contentSnippet: translatedContent,
+        category: item.categories?.[0] || 'General',
+        guid: item.guid || item.link || '',
+      };
+    });
+
+    const news = await Promise.all(newsPromises);
+    return news;
+  } catch (error) {
+    console.error('Error fetching Philippine news:', error);
+    throw error;
   }
 }

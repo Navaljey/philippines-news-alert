@@ -5,12 +5,14 @@ const parser = new Parser({
   timeout: 10000,
 });
 
-interface NewsItem {
+export interface NewsItem {
   title: string;
   link: string;
   content: string;
   pubDate?: string;
   category?: string;
+  contentSnippet?: string; // RSSItem 호환용
+  guid?: string;           // RSSItem 호환용
 }
 
 const feeds = [
@@ -45,6 +47,8 @@ export async function fetchAllRSSFeeds(): Promise<NewsItem[]> {
           content: item.contentSnippet || item.content || '',
           pubDate: item.pubDate || '',
           category: detectCategory(item.title),
+          contentSnippet: item.contentSnippet || '',
+          guid: item.guid || '',
         });
       });
     } catch (error) {
@@ -57,4 +61,3 @@ export async function fetchAllRSSFeeds(): Promise<NewsItem[]> {
 
   return unique;
 }
-

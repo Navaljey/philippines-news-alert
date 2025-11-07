@@ -58,14 +58,20 @@ export async function fetchAllRSSFeeds() {
     const feed = await parser.parseURL(RSS_URL);
     console.log(`📰 Fetched ${feed.items.length} items from RSS`);
     
-    const newsPromises = feed.items.slice(0, 50).map(async (item) => {
+    // 처음 10개만 번역 (테스트용)
+    const itemsToTranslate = feed.items.slice(0, 10);
+    console.log(`🌐 Will translate ${itemsToTranslate.length} items`);
+    
+    const newsPromises = itemsToTranslate.map(async (item, index) => {
       const title = item.title || '';
       const content = item.contentSnippet || item.content || '';
       
-      console.log(`🌐 Translating: ${title.substring(0, 30)}...`);
+      console.log(`[${index + 1}/${itemsToTranslate.length}] Translating: ${title.substring(0, 40)}...`);
       
       const translatedTitle = await translateToKorean(title);
       const translatedContent = await translateToKorean(content);
+      
+      console.log(`[${index + 1}/${itemsToTranslate.length}] ✅ Translation complete`);
       
       return {
         title: translatedTitle,
@@ -79,7 +85,7 @@ export async function fetchAllRSSFeeds() {
     });
 
     const news = await Promise.all(newsPromises);
-    console.log(`✅ Successfully processed ${news.length} news items`);
+    console.log(`✅ Successfully processed ${news.length} news items with translations`);
     return news;
   } catch (error) {
     console.error('❌ Error fetching Philippine news:', error);

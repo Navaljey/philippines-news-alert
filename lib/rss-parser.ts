@@ -1,77 +1,28 @@
-import Parser from 'rss-parser';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-interface CustomFeed {
-  title?: string;
-  description?: string;
-}
-
-interface CustomItem {
-  title?: string;
-  link?: string;
-  pubDate?: string;
-  content?: string;
-  contentSnippet?: string;
-  categories?: string[];
-  guid?: string;
-}
-
-const parser: Parser<CustomFeed, CustomItem> = new Parser({
-  customFields: {
-    item: ['content', 'contentSnippet', 'guid']
-  }
-});
-
-const RSS_URL = 'https://newsinfo.inquirer.net/feed';
-
-// 번역 함수
-async function translateToKorean(text: string): Promise<string> {
-  try {
-    console.log('Translating text:', text.substring(0, 50) + '...');
-    
-    if (!process.env.GEMINI_API_KEY) {
-      console.error('❌ GEMINI_API_KEY is not set');
-      return text;
-    }
-
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-    const prompt = `Translate the following English text to Korean. Only provide the translation, nothing else:\n\n${text}`;
-    
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const translatedText = response.text();
-    
-    console.log('✅ Translation successful');
-    return translatedText;
-  } catch (error) {
-    console.error('❌ Translation error:', error);
-    return text; // 실패 시 원문 반환
-  }
-}
-
 // RSS 피드 가져오기 및 번역
 export async function fetchAllRSSFeeds() {
   try {
+    console.log('🔥🔥🔥 fetchAllRSSFeeds CALLED!');
+    console.log('🔥 GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
+    console.log('🔥 GEMINI_API_KEY length:', process.env.GEMINI_API_KEY?.length || 0);
+    
     console.log('🔄 Starting to fetch RSS feed from:', RSS_URL);
     const feed = await parser.parseURL(RSS_URL);
     console.log(`📰 Fetched ${feed.items.length} items from RSS`);
     
-    // 처음 10개만 번역 (테스트용)
-    const itemsToTranslate = feed.items.slice(0, 10);
+    // 처음 2개만 번역 (빠른 테스트)
+    const itemsToTranslate = feed.items.slice(0, 2);
     console.log(`🌐 Will translate ${itemsToTranslate.length} items`);
     
     const newsPromises = itemsToTranslate.map(async (item, index) => {
       const title = item.title || '';
       const content = item.contentSnippet || item.content || '';
       
-      console.log(`[${index + 1}/${itemsToTranslate.length}] Translating: ${title.substring(0, 40)}...`);
+      console.log(`[${index + 1}] 🔵 BEFORE Translation - Title: ${title.substring(0, 50)}`);
       
       const translatedTitle = await translateToKorean(title);
       const translatedContent = await translateToKorean(content);
       
-      console.log(`[${index + 1}/${itemsToTranslate.length}] ✅ Translation complete`);
+      console.log(`[${index + 1}] 🟢 AFTER Translation - Title: ${translatedTitle.substring(0, 50)}`);
       
       return {
         title: translatedTitle,
@@ -86,6 +37,7 @@ export async function fetchAllRSSFeeds() {
 
     const news = await Promise.all(newsPromises);
     console.log(`✅ Successfully processed ${news.length} news items with translations`);
+    console.log(`🟢 First item title after all: ${news[0]?.title.substring(0, 50)}`);
     return news;
   } catch (error) {
     console.error('❌ Error fetching Philippine news:', error);

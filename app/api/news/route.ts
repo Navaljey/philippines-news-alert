@@ -1,24 +1,19 @@
 import { NextResponse } from 'next/server';
 import { fetchAllRSSFeeds } from '@/lib/rss-parser';
-import { filterRelevantNews } from '@/lib/filter';
 
 export async function GET() {
   try {
-    console.log('🔄 Fetching news feed...');
+    console.log('🔄 Fetching and translating news feed...');
     
-    // RSS 피드 가져오기 (번역 포함)
-    const rssItems = await fetchAllRSSFeeds();
-    console.log(`📰 Fetched ${rssItems.length} items`);
+    // RSS 피드 가져오기 (번역 포함) - 이미 한국어로 번역됨
+    const translatedNews = await fetchAllRSSFeeds();
+    console.log(`📰 Fetched and translated ${translatedNews.length} items`);
     
-    // 필터링 (선택사항)
-    const filteredNews = filterRelevantNews(rssItems);
-    console.log(`✅ Filtered to ${filteredNews.length} relevant items`);
-    
+    // 필터링 없이 번역된 뉴스 그대로 반환
     return NextResponse.json({
       success: true,
-      count: filteredNews.length,
-      totalRaw: rssItems.length,
-      news: filteredNews.slice(0, 50), // 최대 50개
+      count: translatedNews.length,
+      news: translatedNews,
     });
   } catch (error) {
     console.error('❌ Error fetching news:', error);

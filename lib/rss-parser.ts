@@ -42,7 +42,7 @@ async function translateToKorean(text: string): Promise<{translated: string, deb
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
     debugInfo.step2 = 'Getting model';
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     debugInfo.step3 = 'Generating content';
     const prompt = `Translate the following English text to Korean. Only provide the translation, nothing else:\n\n${text}`;

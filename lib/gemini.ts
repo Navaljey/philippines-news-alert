@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function translateToKorean(text: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
     const prompt = `다음 필리핀 뉴스 제목과 내용을 자연스러운 한국어로 번역해주세요. 
 뉴스의 핵심 내용을 정확하게 전달하되, 한국 독자가 이해하기 쉽게 번역해주세요.
@@ -25,7 +25,7 @@ ${text}
 
 export async function reviewAndSummarize(title: string, content: string, category: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
     const prompt = `다음은 "${category}" 카테고리의 필리핀 뉴스입니다.
 이 뉴스를 한국인 독자를 위해 요약하고 리뷰해주세요. 

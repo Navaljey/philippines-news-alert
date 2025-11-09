@@ -1,5 +1,4 @@
 import Parser from 'rss-parser';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface CustomFeed {
   title?: string;
@@ -24,12 +23,13 @@ const parser: Parser<CustomFeed, CustomItem> = new Parser({
 
 const RSS_URL = 'https://newsinfo.inquirer.net/feed';
 
-// 번역 함수 - 디버그 정보 추가
+// REST API 직접 호출 방식으로 번역
 async function translateToKorean(text: string): Promise<{translated: string, debug: any}> {
   const debugInfo: any = {
     input: text.substring(0, 50),
     hasApiKey: !!process.env.GEMINI_API_KEY,
     apiKeyLength: process.env.GEMINI_API_KEY?.length || 0,
+    method: 'REST API Direct Call',
   };
   
   try {
@@ -38,33 +38,53 @@ async function translateToKorean(text: string): Promise<{translated: string, deb
       return { translated: text, debug: debugInfo };
     }
 
-    debugInfo.step1 = 'Creating Gemini client';
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    // Gemini REST API 직접 호출
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;
     
-    debugInfo.step2 = 'Getting model';
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    debugInfo.step1 = 'Calling REST API';
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: `Translate the following English text to Korean. Only provide the translation, nothing else:\n\n${text}`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1000,
+        }
+      })
+    });
 
-    debugInfo.step3 = 'Generating content';
-    const prompt = `Translate the following English text to Korean. Only provide the translation, nothing else:\n\n${text}`;
+    debugInfo.step2 = `Response status: ${response.status}`;
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API error ${response.status}: ${errorText}`);
+    }
+
+    const data = await response.json();
+    debugInfo.step3 = 'Parsing response';
+
+    if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format from API');
+    }
+
+    const translatedText = data.candidates[0].content.parts[0].text;
     
-    const result = await model.generateContent(prompt);
-    debugInfo.step4 = 'Getting response';
-    
-    const response = await result.response;
-    debugInfo.step5 = 'Getting text';
-    
-    const translatedText = response.text();
-    debugInfo.output = translatedText.substring(0, 50);
     debugInfo.success = true;
+    debugInfo.output = translatedText.substring(0, 50);
+    debugInfo.outputLength = translatedText.length;
     
     return { translated: translatedText, debug: debugInfo };
   } catch (error: any) {
     debugInfo.error = error.message || String(error);
-    debugInfo.errorDetails = {
-      name: error.name,
-      message: error.message,
-      stack: error.stack?.substring(0, 200)
-    };
+    debugInfo.errorType = error.constructor?.name || 'Unknown';
     return { translated: text, debug: debugInfo };
   }
 }

@@ -38,8 +38,8 @@ async function translateToKorean(text: string): Promise<{translated: string, deb
       return { translated: text, debug: debugInfo };
     }
 
-    // Gemini REST API 직접 호출 (v1 API에서 지원하는 모델 사용)
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    // Gemini REST API 직접 호출 (Gemini 2.0 모델 사용)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
     
     debugInfo.step1 = 'Calling REST API';
     

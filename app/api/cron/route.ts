@@ -14,12 +14,12 @@ export async function GET(request: NextRequest) {
 
     const rssItems = await fetchAllRSSFeeds();
     const filteredNews = filterRelevantNews(rssItems);
-    
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    // ▼▼▼ 1시간 제한 필터는 제거하고, 10점 & 5개 제한은 유지 ▼▼▼
     const recentImportantNews = filteredNews
-      .filter(item => new Date(item.pubDate) > oneHourAgo)
-      .filter(item => item.score >= 10)
-      .slice(0, 5);
+      .filter(item => item.score >= 10) // 점수 10점 이상 조건 유지
+      .slice(0, 5);                     // 최대 5개로 제한 유지
+    // ▲▲▲ 수정된 부분 ▲▲▲
 
     console.log(`Processing ${recentImportantNews.length} news items`);
 
@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
       );
 
       console.log('Translated:', titleKo);
-      
+
+      // (참고) API 속도 제한을 피하기 위한 2초 대기
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
